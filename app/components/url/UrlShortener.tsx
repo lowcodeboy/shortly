@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
-import { createShortUrl } from '@/app/lib/firebase/urls';
+import { createShortUrl, validateAndSaveUrl } from '@/app/lib/firebase/urls';
 import { isValidUrl, normalizeUrl } from '@/app/lib/utils/urlUtils';
 
 export default function UrlShortener() {
@@ -10,14 +10,17 @@ export default function UrlShortener() {
   const [shortUrl, setShortUrl] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isPending, setIsPending] = useState(false);
+  const [pendingUrlData, setPendingUrlData] = useState<any>(null);
   const { user } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setShortUrl('');
+    setIsPending(false);
+    setPendingUrlData(null);
 
-    // Validate URL
     const normalizedUrl = normalizeUrl(longUrl);
     if (!isValidUrl(normalizedUrl)) {
       setError('Please enter a valid URL');
@@ -30,12 +33,34 @@ export default function UrlShortener() {
       if (result) {
         const baseUrl = window.location.origin;
         setShortUrl(`${baseUrl}/${result.shortId}`);
+        setPendingUrlData(result);
+        setIsPending(true);
         setLongUrl('');
       } else {
         setError('Failed to create short URL');
       }
     } catch {
       setError('An error occurred');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleValidate = async () => {
+    if (!pendingUrlData) return;
+    
+    setIsLoading(true);
+    try {
+      const validatedUrl = await validateAndSaveUrl(pendingUrlData.shortId, pendingUrlData);
+      if (validatedUrl) {
+        setIsPending(false);
+        setShortUrl('');
+        setPendingUrlData(null);
+      } else {
+        setError('Failed to validate URL');
+      }
+    } catch {
+      setError('An error occurred during validation');
     } finally {
       setIsLoading(false);
     }
@@ -82,21 +107,32 @@ export default function UrlShortener() {
 
       {shortUrl && (
         <div className="mt-8">
-          <h3 className="text-xl font-semibold mb-4">Your Shortened URLs</h3>
+          <h3 className="text-xl font-semibold mb-4">Your Shortened URL</h3>
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <p className="text-blue-400 font-medium">{shortUrl}</p>
                 <p className="text-sm text-gray-400 mt-1">{longUrl}</p>
               </div>
-              <button
-                onClick={copyToClipboard}
-                className="ml-4 p-2 text-gray-400 hover:text-white transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-              </button>
+              <div className="flex items-center gap-2">
+                {isPending && (
+                  <button
+                    onClick={handleValidate}
+                    disabled={isLoading}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-green-800 disabled:cursor-not-allowed"
+                  >
+                    {isLoading ? 'Validating...' : 'Validate URL'}
+                  </button>
+                )}
+                <button
+                  onClick={copyToClipboard}
+                  className="p-2 text-gray-400 hover:text-white transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                </button>
+              </div>
             </div>
             <div className="flex items-center gap-4 mt-4 text-sm text-gray-400">
               <span>{new Date().toLocaleDateString()}</span>

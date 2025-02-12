@@ -6,6 +6,7 @@ import {
   where, 
   getDocs,
   serverTimestamp,
+  deleteDoc,
 } from 'firebase/firestore';
 import { generateShortId } from '../utils/urlUtils';
 
@@ -15,6 +16,8 @@ export interface UrlMapping {
   userId: string;
   createdAt: Date;
   clicks: number;
+  validated: boolean;
+  pendingShortId?: string;
 }
 
 const URLS_COLLECTION = 'urls';
@@ -23,19 +26,14 @@ export async function createShortUrl(longUrl: string, userId: string): Promise<U
   try {
     const shortId = generateShortId();
     
-    const urlData = {
+    // Just return the data without saving to Firestore
+    return {
       shortId,
       longUrl,
       userId,
-      createdAt: serverTimestamp(),
-      clicks: 0
-    };
-
-    await addDoc(collection(db, URLS_COLLECTION), urlData);
-    
-    return {
-      ...urlData,
       createdAt: new Date(),
+      clicks: 0,
+      validated: false
     };
   } catch (error) {
     console.error('Error creating short URL:', error);
@@ -85,5 +83,48 @@ export async function getUserUrls(userId: string): Promise<UrlMapping[]> {
   } catch (error) {
     console.error('Error getting user URLs:', error);
     return [];
+  }
+}
+
+export async function validateAndSaveUrl(shortId: string, urlData: Partial<UrlMapping>): Promise<UrlMapping | null> {
+  try {
+    // Now we save to Firestore only when validating
+    const finalUrlData = {
+      ...urlData,
+      shortId,
+      validated: true,
+      createdAt: serverTimestamp(),
+    };
+
+    await addDoc(collection(db, URLS_COLLECTION), finalUrlData);
+    
+    return {
+      ...finalUrlData,
+      createdAt: new Date(),
+    } as UrlMapping;
+  } catch (error) {
+    console.error('Error validating URL:', error);
+    return null;
+  }
+}
+
+export async function deleteUrl(shortId: string): Promise<boolean> {
+  try {
+    const urlQuery = query(
+      collection(db, URLS_COLLECTION),
+      where('shortId', '==', shortId)
+    );
+    
+    const querySnapshot = await getDocs(urlQuery);
+    
+    if (!querySnapshot.empty) {
+      await deleteDoc(querySnapshot.docs[0].ref);
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('Error deleting URL:', error);
+    return false;
   }
 } 
