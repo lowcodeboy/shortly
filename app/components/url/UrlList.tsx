@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { getUserUrls, type UrlMapping, deleteUrl } from '@/app/lib/firebase/urls';
 
@@ -9,26 +9,25 @@ export default function UrlList() {
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
 
-  const loadUrls = async () => {
+  const loadUrls = useCallback(async () => {
     if (user) {
       const userUrls = await getUserUrls(user.uid);
       setUrls(userUrls);
       setIsLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     loadUrls();
-  }, [user]);
+  }, [loadUrls]);
 
-  // Add this effect to refresh every 2 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       loadUrls();
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [user]);
+  }, [loadUrls]);
 
   const handleDelete = async (shortId: string) => {
     try {

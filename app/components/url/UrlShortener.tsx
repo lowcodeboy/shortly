@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
-import { createShortUrl, validateAndSaveUrl } from '@/app/lib/firebase/urls';
+import { createShortUrl, UrlMapping, validateAndSaveUrl } from '@/app/lib/firebase/urls';
 import { isValidUrl, normalizeUrl } from '@/app/lib/utils/urlUtils';
 
 export default function UrlShortener() {
@@ -11,7 +11,7 @@ export default function UrlShortener() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isPending, setIsPending] = useState(false);
-  const [pendingUrlData, setPendingUrlData] = useState<any>(null);
+  const [pendingUrlData, setPendingUrlData] = useState<UrlMapping | null>(null);
   const { user } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
