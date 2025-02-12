@@ -23,7 +23,7 @@ export default function LoginForm() {
     }
 
     if (user) {
-      router.push('/dashboard'); // Redirect to dashboard after successful login
+      router.push('/dashboard');
     }
   };
 
@@ -67,7 +67,7 @@ export default function LoginForm() {
       </button>
 
       <p className="mt-4 text-sm text-center text-gray-400">
-        Don't have an account?{' '}
+        Don&apos;t have an account?{' '}
         <Link href="/auth/register" className="text-blue-400 hover:underline">
           Create one
         </Link>
