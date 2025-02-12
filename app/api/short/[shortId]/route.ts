@@ -1,23 +1,28 @@
 import { getLongUrl } from '@/app/lib/firebase/urls';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+
+interface RouteSegment {
+  params: Promise<{
+    shortId: string;
+  }>;
+}
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { shortId: string } }
+  segment: RouteSegment
 ) {
-  const shortId = params.shortId;
+  const { shortId } = await segment.params;
 
   try {
     const longUrl = await getLongUrl(shortId);
 
     if (!longUrl) {
-      return new NextResponse('URL not found', { status: 404 });
+      return Response.json({ error: 'URL not found' }, { status: 404 });
     }
 
-    // Redirect to the long URL
-    return NextResponse.redirect(longUrl);
+    return Response.redirect(longUrl);
   } catch (error) {
     console.error('Error during redirect:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    return Response.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 } 

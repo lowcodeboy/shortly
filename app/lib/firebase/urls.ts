@@ -1,14 +1,11 @@
 import { db } from './config';
 import { 
   collection, 
-  addDoc, 
+  addDoc,
   query, 
   where, 
   getDocs,
-  doc,
-  getDoc,
   serverTimestamp,
-  DocumentData 
 } from 'firebase/firestore';
 import { generateShortId } from '../utils/urlUtils';
 
@@ -48,6 +45,8 @@ export async function createShortUrl(longUrl: string, userId: string): Promise<U
 
 export async function getLongUrl(shortId: string): Promise<string | null> {
   try {
+    console.log('Fetching URL for shortId:', shortId); // Debug log
+    
     const urlQuery = query(
       collection(db, URLS_COLLECTION),
       where('shortId', '==', shortId)
@@ -56,10 +55,14 @@ export async function getLongUrl(shortId: string): Promise<string | null> {
     const querySnapshot = await getDocs(urlQuery);
     
     if (querySnapshot.empty) {
+      console.log('No URL found'); // Debug log
       return null;
     }
 
-    return querySnapshot.docs[0].data().longUrl;
+    const longUrl = querySnapshot.docs[0].data().longUrl;
+    console.log('Found longUrl:', longUrl); // Debug log
+    return longUrl;
+    
   } catch (error) {
     console.error('Error getting long URL:', error);
     return null;

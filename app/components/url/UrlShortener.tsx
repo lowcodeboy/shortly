@@ -34,7 +34,7 @@ export default function UrlShortener() {
       } else {
         setError('Failed to create short URL');
       }
-    } catch (err) {
+    } catch {
       setError('An error occurred');
     } finally {
       setIsLoading(false);
@@ -45,7 +45,7 @@ export default function UrlShortener() {
     try {
       await navigator.clipboard.writeText(shortUrl);
       // You could add a toast notification here
-    } catch (err) {
+    } catch {
       setError('Failed to copy to clipboard');
     }
   };

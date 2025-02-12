@@ -1,12 +1,18 @@
 import { getLongUrl } from '@/app/lib/firebase/urls';
 import { redirect } from 'next/navigation';
 
+interface PageProps {
+  params: Promise<{
+    shortId: string;
+  }>;
+}
+
 export default async function ShortUrlRedirectPage({
   params,
-}: {
-  params: { shortId: string };
-}) {
-  const longUrl = await getLongUrl(params.shortId);
+}: PageProps) {
+  // Await params before accessing shortId
+  const { shortId } = await params;
+  const longUrl = await getLongUrl(shortId);
 
   if (!longUrl) {
     // You could redirect to a 404 page or show an error

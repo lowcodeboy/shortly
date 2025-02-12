@@ -22,7 +22,7 @@ export function isValidUrl(url: string): boolean {
   try {
     new URL(url);
     return true;
-  } catch (error) {
+  } catch {
     return false;
   }
 }

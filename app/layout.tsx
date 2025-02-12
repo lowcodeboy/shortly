@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { geist, geistMono } from './fonts'
 import "./globals.css";
 import { AuthProvider } from './context/AuthContext';
 import AuthRedirect from './components/auth/AuthRedirect';
+import { inter } from "./fonts";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -15,7 +15,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geist.variable} ${geistMono.variable} antialiased`}>
+    <html lang="en" className={`${inter.variable} antialiased`}>
       <body>
         <AuthProvider>
           <AuthRedirect>
